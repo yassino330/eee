@@ -1,31 +1,21 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo [1/3] Checking Python...
+echo [1/2] Checking Python...
 py -3 --version
 if errorlevel 1 (
-  echo Python 3 is required. Install Python 3.10+ and enable Add Python to PATH.
+  echo Python 3.10+ is required. Install Python and enable Add Python to PATH.
   pause
   exit /b 1
 )
-echo [2/3] Creating Python environment...
+echo [2/2] Installing local controller dependency...
 if not exist ".venv\Scripts\python.exe" py -3 -m venv .venv
 call ".venv\Scripts\activate.bat"
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 if errorlevel 1 goto failed
-echo [3/3] Installing web dependencies...
-where npm >nul 2>nul
-if errorlevel 1 (
-  echo Node.js 22.12.0+ is required. Install it, then run install.bat again.
-  pause
-  exit /b 1
-)
-npm install
-if errorlevel 1 goto failed
-if not exist ".env" copy ".env.example" ".env"
 echo.
-echo Setup complete. Use start.bat for browser preview, or deploy the HTTPS build as a Zoom App.
+echo Setup complete. Run start.bat to open VacuumTube Remote.
 pause
 exit /b 0
 :failed
