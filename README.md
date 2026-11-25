@@ -25,30 +25,17 @@ The Meeting SDK embeds a meeting in this app. It does not attach to a meeting al
 
 ## Setup
 
-1. Copy `.env.example` to `.env`.
-2. In your Zoom Marketplace developer app, enable the Meeting SDK and copy the SDK Key and SDK Secret into the local `.env` file:
+1. Download or clone this repository to your Windows PC.
+2. Run `install.bat` once. It installs the Python and Node dependencies and creates a local `.env` file from `.env.example`.
+3. Open `.env` in Notepad. In your Zoom Marketplace developer app, enable Meeting SDK and enter your Client ID and Client Secret:
    - `ZOOM_MEETING_SDK_KEY=...`
    - `ZOOM_MEETING_SDK_SECRET=...`
-3. Never commit `.env`, share the secret, or put it in a `VITE_*` browser variable.
-4. Open a terminal in the repository:
+4. Never commit `.env`, share the secret, or put it in a `VITE_*` browser variable.
+5. Run `start.bat`. It starts the local controller and web interface, then opens the app in your browser.
+6. Choose `VacuumTube.exe` manually, then launch it.
+7. Enter a Zoom Meeting ID, passcode, and display name, then click Join. The app joins as a separate visible participant; the meeting host may need to admit it.
 
-```powershell
-npm install
-npm run dev
-```
-
-5. In a second PowerShell window:
-
-```powershell
-py -m venv .venv
-.venv\\Scripts\\Activate.ps1
-pip install -r requirements.txt
-uvicorn local_agent:app --host 127.0.0.1 --port 8765
-```
-
-6. Open the Vite URL shown in the first terminal (normally http://127.0.0.1:5173).
-7. Choose `VacuumTube.exe` manually, then launch it.
-8. Enter a Zoom Meeting ID, passcode, and display name, then click Join. The app joins as a separate visible participant; the meeting host may need to admit it.
+If you prefer manual setup, install Node.js 22.12.0+ and Python 3.10+, run `npm install`, install Python packages with `pip install -r requirements.txt`, then run the local agent with `uvicorn local_agent:app --host 127.0.0.1 --port 8765` and the frontend with `npm run dev`.
 
 ## Notes
 
