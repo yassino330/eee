@@ -199,7 +199,7 @@ class App(tk.Tk):
         raw = "\\n".join(texts)
         found = []
         for line in raw.splitlines():
-            match = re.search(r"!(up|down|left|right|enter|play|pause|mute)\\b", line.lower())
+            match = re.search(r"!(up|down|left|right|enter|play|pause|mute)\b", line.lower())
             if match:
                 found.append(("!" + match.group(1), line.strip()))
         return found, raw
@@ -244,7 +244,7 @@ class App(tk.Tk):
                 now = time.time()
                 self.seen = {key: value for key, value in self.seen.items() if now - value < 180}
                 for command, line in found:
-                    signature = (command, re.sub(r"\\s+", " ", line.lower()).strip())
+                    signature = (command, re.sub(r"\s+", " ", line.lower()).strip())
                     if signature in self.seen:
                         continue
                     self.seen[signature] = now
