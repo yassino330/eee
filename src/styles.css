@@ -20,3 +20,6 @@ input:focus{border-color:#a7e87588}label{display:block;color:#aeb8c8;font-size:1
 .wide{width:100%;margin-top:8px}.status{color:#a7e875;font-size:12px;min-height:18px}.notice{background:#202735;border:1px solid #ffffff12;padding:13px;border-radius:11px;margin-top:20px;font-size:11px;color:#c4ccda}.notice p{line-height:1.6;margin:6px 0 0;color:#9ba6b8}
 footer{display:flex;justify-content:space-between;color:#697589;font:10px 'DM Mono',monospace;letter-spacing:1px;padding:25px 2px 0}
 @media(max-width:760px){.columns{grid-template-columns:1fr}.shell{padding:22px 14px}.panel{padding:18px}.hero{padding:32px 0 22px}}
+
+#zoom-root{width:100%;min-height:360px;margin-top:12px;overflow:hidden;border-radius:12px}
+#zoom-root:empty{display:none}
