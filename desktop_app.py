@@ -157,7 +157,7 @@ class App(tk.Tk):
         meeting = self.meeting.get().strip()
         exe = Path(self.exe.get().strip().strip('"'))
         tess = self.tesseract.get().strip().strip('"')
-        if not re.match(r"^https://([\\w-]+\\.)?(zoom\\.us|zoom\\.com)/", meeting, re.I):
+        if not re.match(r"^https://([\w-]+\.)?(zoom\.us|zoom\.com)/", meeting, re.I):
             messagebox.showerror("Zoom meeting link needed", "Paste a valid HTTPS Zoom meeting invite link.")
             return
         if not exe.is_file() or exe.name.lower() != "vacuumtube.exe":
@@ -257,7 +257,7 @@ class App(tk.Tk):
                 now = time.time()
                 self.seen = {k:v for k,v in self.seen.items() if now-v < 180}
                 for command, line in found:
-                    signature = (command, re.sub(r"\\s+", " ", line.lower()).strip())
+                    signature = (command, re.sub(r"\s+", " ", line.lower()).strip())
                     if signature in self.seen:
                         continue
                     self.seen[signature] = now
