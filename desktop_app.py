@@ -4,6 +4,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import pyautogui
+import pygetwindow
 
 APP_DIR = Path(os.getenv("APPDATA", str(Path.home()))) / "VacuumTubeRemote"
 SETTINGS_FILE = APP_DIR / "settings.json"
@@ -87,8 +88,15 @@ class App(tk.Tk):
         if not self.started:
             self.status.set("Click START first to launch VacuumTube."); return
         try:
-            pyautogui.press(key); self.status.set(f"Sent local keyboard input: {key}")
-        except Exception as exc: self.status.set(f"Could not send input: {exc}")
+            windows = pygetwindow.getWindowsWithTitle("VacuumTube")
+            if windows:
+                windows[0].activate()
+                self.after(180, lambda: pyautogui.press(key))
+                self.status.set(f"Sent local keyboard input to VacuumTube: {key}")
+            else:
+                self.status.set("VacuumTube window not found. Make sure the player is open.")
+        except Exception as exc:
+            self.status.set(f"Could not focus VacuumTube: {exc}")
 
 if __name__ == "__main__":
     App().mainloop()
