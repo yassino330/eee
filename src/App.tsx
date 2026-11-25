@@ -1,28 +1,64 @@
-import { useEffect, useRef, useState } from "react";
-import ZoomMtgEmbedded from "@zoom/meetingsdk/embedded";
+import { useEffect, useState } from "react";
+import zoomSdk from "@zoom/appssdk";
 
 const AGENT = "http://127.0.0.1:8765";
+const COMMANDS = new Set(["up", "down", "left", "right", "enter", "play", "pause", "mute"]);
+
+type ZoomState = { ready: boolean; runningContext: string; meeting: string; user: string; message: string };
 
 export default function App() {
-  const zoomRoot = useRef<HTMLDivElement>(null);
-  const zoomClient = useRef<ReturnType<typeof ZoomMtgEmbedded.createClient> | null>(null);
   const [agent, setAgent] = useState("Checking local controller…");
   const [selected, setSelected] = useState(false);
-  const [meetingNumber, setMeetingNumber] = useState("");
-  const [passcode, setPasscode] = useState("");
-  const [displayName, setDisplayName] = useState("VacuumTube Remote");
-  const [status, setStatus] = useState("Not connected");
   const [videoUrl, setVideoUrl] = useState("");
-  const [joining, setJoining] = useState(false);
+  const [commandText, setCommandText] = useState("");
+  const [status, setStatus] = useState("Ready. Commands are only sent after you press Send.");
+  const [zoom, setZoom] = useState<ZoomState>({
+    ready: false, runningContext: "Checking Zoom…", meeting: "", user: "", message: ""
+  });
 
   useEffect(() => {
+    let active = true;
     fetch(`${AGENT}/settings`)
       .then(r => r.json())
       .then(d => {
+        if (!active) return;
         setSelected(Boolean(d.selected));
         setAgent(d.selected ? `Selected: ${d.filename}` : "No executable selected");
       })
-      .catch(() => setAgent("Local controller not running"));
+      .catch(() => active && setAgent("Local controller not running"));
+
+    async function connectZoomApp() {
+      try {
+        const config = await zoomSdk.config({
+          capabilities: ["getRunningContext", "getMeetingContext", "getUserContext"]
+        });
+        const runningContext = String(config.runningContext || "Zoom App connected");
+        let meeting = "";
+        let user = "";
+        if (runningContext.toLowerCase().includes("meeting")) {
+          try {
+            const context = await zoomSdk.getMeetingContext();
+            meeting = String(context.meetingTopic || context.meetingID || "Active meeting");
+          } catch { meeting = "Meeting context unavailable"; }
+        }
+        try {
+          const context = await zoomSdk.getUserContext();
+          user = String(context.screenName || "");
+        } catch { /* user context is optional */ }
+        if (active) setZoom({
+          ready: true, runningContext, meeting, user,
+          message: "Connected to the Zoom client. This app does not read meeting chat."
+        });
+      } catch {
+        if (active) setZoom({
+          ready: false, runningContext: "Browser preview",
+          meeting: "", user: "",
+          message: "Open this page as an installed Zoom App to connect it to your meeting. Browser preview still supports manual controls."
+        });
+      }
+    }
+    void connectZoomApp();
+    return () => { active = false; };
   }, []);
 
   async function chooseExe() {
@@ -43,14 +79,46 @@ export default function App() {
   }
 
   async function send(command: string) {
+    if (!COMMANDS.has(command)) {
+      setStatus("That command is not allowed. Use !help to see the supported commands.");
+      return;
+    }
     try {
       const r = await fetch(`${AGENT}/command`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command })
       });
-      if (!r.ok) throw new Error("Controller rejected command");
-      setStatus(`Sent local command: ${command}`);
-    } catch { setStatus("Local controller unavailable"); }
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || "Controller rejected command");
+      setStatus(`Sent local command: !${command}`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Local controller unavailable");
+    }
+  }
+
+  async function submitCommand() {
+    const raw = commandText.trim();
+    if (!raw) return;
+    const [first, ...rest] = raw.replace(/^!/, "").split(/\s+/);
+    const command = first.toLowerCase();
+    if (command === "help") {
+      setStatus("Commands: !up !down !left !right !enter !play !pause !mute. !type is disabled.");
+      setCommandText("");
+      return;
+    }
+    if (command === "video") {
+      setVideoUrl(rest.join(" "));
+      setStatus("Video URL copied into the Open Video field. Press Open to launch it.");
+      setCommandText("");
+      return;
+    }
+    if (command === "type") {
+      setStatus("!type is disabled: arbitrary text injection is not supported.");
+      setCommandText("");
+      return;
+    }
+    await send(command);
+    setCommandText("");
   }
 
   async function openVideo() {
@@ -60,63 +128,18 @@ export default function App() {
         body: JSON.stringify({ url: videoUrl })
       });
       const d = await r.json();
-      setStatus(d.opened ? "YouTube video opened in your browser" : (d.detail || "Could not open video"));
-    } catch { setStatus("Local controller unavailable"); }
-  }
-
-  async function joinMeeting() {
-    if (!zoomRoot.current || joining) return;
-    setJoining(true);
-    setStatus("Preparing Zoom meeting…");
-    try {
-      const signatureResponse = await fetch(`${AGENT}/zoom/signature`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meeting_number: meetingNumber.replace(/\s/g, "") })
-      });
-      const signatureData = await signatureResponse.json();
-      if (!signatureResponse.ok) throw new Error(signatureData.detail || "Could not create Zoom signature");
-
-      const client = ZoomMtgEmbedded.createClient();
-      zoomClient.current = client;
-      await client.init({
-        zoomAppRoot: zoomRoot.current,
-        language: "en-US",
-        patchJsMedia: true,
-        leaveOnPageUnload: true
-      });
-      await client.join({
-        signature: signatureData.signature,
-        meetingNumber: meetingNumber.replace(/\s/g, ""),
-        password: passcode,
-        userName: displayName.trim()
-      });
-      setStatus("Joined the Zoom meeting. You are visible to meeting participants.");
+      if (!r.ok) throw new Error(d.detail || "Could not open video");
+      setStatus("YouTube video opened in your browser.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not join Zoom meeting");
-      zoomClient.current = null;
-    } finally {
-      setJoining(false);
-    }
-  }
-
-  async function leaveMeeting() {
-    if (!zoomClient.current) return;
-    try {
-      await zoomClient.current.leave();
-      setStatus("You left the Zoom meeting.");
-    } catch {
-      setStatus("Could not leave cleanly. Close this page if the meeting SDK is stuck.");
-    } finally {
-      zoomClient.current = null;
+      setStatus(error instanceof Error ? error.message : "Local controller unavailable");
     }
   }
 
   return <main className="shell">
-    <header><div className="brand-mark">V</div><div><p className="eyebrow">REMOTE CONTROL</p><h1>VacuumTube <span>Remote</span></h1></div><div className="live-pill">LOCAL APP</div></header>
+    <header><div className="brand-mark">V</div><div><p className="eyebrow">ZOOM APP · REMOTE CONTROL</p><h1>VacuumTube <span>Remote</span></h1></div><div className="live-pill">{zoom.ready ? "ZOOM CONNECTED" : "PREVIEW MODE"}</div></header>
     <section className="hero">
       <p className="eyebrow">CONTROL CENTER</p><h2>Your meeting. Your media.</h2>
-      <p className="muted">Join a Zoom meeting visibly and control a manually selected VacuumTube installation from this page.</p>
+      <p className="muted">Open VacuumTube Remote from the Zoom Apps panel, then use its controls to operate your own VacuumTube installation.</p>
     </section>
     <div className="columns">
       <section className="panel">
@@ -136,15 +159,19 @@ export default function App() {
         <div className="input-row"><input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="YouTube URL or video ID" /><button onClick={openVideo}>Open</button></div>
       </section>
       <section className="panel zoom-panel">
-        <p className="eyebrow">02 / ZOOM MEETING SDK</p><h3>Join the actual meeting</h3>
-        <p className="muted">This joins the meeting as a separate, visible participant in this app. It cannot attach to a meeting already open in the Zoom desktop client.</p>
-        <label>Meeting ID<input value={meetingNumber} onChange={e => setMeetingNumber(e.target.value)} placeholder="Meeting number" inputMode="numeric" /></label>
-        <label>Passcode<input value={passcode} onChange={e => setPasscode(e.target.value)} placeholder="Meeting passcode" type="password" /></label>
-        <label>Display name<input value={displayName} onChange={e => setDisplayName(e.target.value)} /></label>
-        <div className="actions"><button className="wide" onClick={joinMeeting} disabled={!meetingNumber || !displayName.trim() || joining}>{joining ? "Joining…" : "Join meeting"}</button><button className="secondary" onClick={leaveMeeting}>Leave</button></div>
+        <p className="eyebrow">02 / ZOOM APPS SDK</p><h3>In-meeting controller</h3>
+        <p className="muted">{zoom.message}</p>
+        <div className="zoom-context">
+          <div><span>CONTEXT</span><strong>{zoom.runningContext}</strong></div>
+          {zoom.meeting && <div><span>MEETING</span><strong>{zoom.meeting}</strong></div>}
+          {zoom.user && <div><span>YOU</span><strong>{zoom.user}</strong></div>}
+        </div>
+        <div className="divider" />
+        <p className="eyebrow">SEND A COMMAND</p>
+        <p className="muted">Type a command here and press Send. This is an app input, not the Zoom meeting chat.</p>
+        <div className="input-row"><input value={commandText} onChange={e => setCommandText(e.target.value)} onKeyDown={e => { if (e.key === "Enter") void submitCommand(); }} placeholder="!up, !left, !play, !help…" /><button onClick={() => void submitCommand()}>Send</button></div>
         <p className="status">{status}</p>
-        <div ref={zoomRoot} id="zoom-root" />
-        <div className="notice"><strong>Chat automation is not enabled</strong><p>The Meeting SDK policy says it is for human use and does not support bots. This build provides a visible, user-operated meeting session and manual controls; it does not automatically read meeting chat or execute commands from other participants. Confirm Zoom's approval before adding that workflow.</p></div>
+        <div className="notice"><strong>Zoom policy & privacy</strong><p>This is a user-operated Zoom App. It does not monitor, collect, or parse meeting chat, and it does not act on commands sent by other participants. Only commands you explicitly submit in this app control your local player. To build a chat-driven workflow, obtain Zoom's approval and use its designated RTMS route where authorized.</p></div>
       </section>
     </div>
     <footer>VACUUMTUBE REMOTE <span>EARLY DEVELOPMENT BUILD</span></footer>
