@@ -25,7 +25,7 @@ npm install
 if errorlevel 1 goto failed
 if not exist ".env" copy ".env.example" ".env"
 echo.
-echo Setup complete. Edit .env and add your Zoom Meeting SDK credentials.
+echo Setup complete. Use start.bat for browser preview, or deploy the HTTPS build as a Zoom App.
 pause
 exit /b 0
 :failed
