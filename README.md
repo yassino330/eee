@@ -1,51 +1,59 @@
 # VacuumTube Remote
 
-A Windows companion app for controlling a user-selected VacuumTube executable, with a Zoom Meeting SDK for Web front end.
+A Windows companion app with a Zoom Meeting SDK for Web meeting view and a local Python controller for a manually selected VacuumTube executable.
 
-## Current scope
+## What works in this starter
 
-- React + TypeScript + Vite front end using the installed `@zoom/meetingsdk` package.
-- Python local controller with a **manual-only** executable picker. It never scans the PC or auto-detects VacuumTube.
-- Local control API is bound to `127.0.0.1` only.
-- Safe command allowlist: navigation, play/pause, mute, and opening a YouTube URL after explicit validation.
+- React + TypeScript + Vite interface.
+- Zoom Meeting SDK 6.10.5 component-view initialization and visible meeting join/leave flow.
+- Backend-generated, short-lived Meeting SDK signature. The SDK secret stays in the local Python process and is never sent to browser JavaScript.
+- Manual-only `VacuumTube.exe` selection using the Windows file picker. No automatic detection.
+- Local allowlisted keyboard controls and validated YouTube video URL opening.
+- Local controller binds to loopback (127.0.0.1), not the public network.
 
-## Important Zoom limitation
+## Zoom policy boundary
 
-The Meeting SDK embeds a meeting experience in this app; it does not attach to an already-running Zoom desktop meeting. Zoom's Meeting SDK is intended for human meeting experiences and does not support bots or automated notetakers. This starter does **not** implement an unattended meeting participant or silently harvest meeting chat. Before adding any chat-driven automation, obtain confirmation from Zoom that the exact use case is permitted and use only documented SDK chat APIs with clear participant/host consent.
+Zoom's Meeting SDK documentation says the SDK is designed for human use cases and does not support bots or AI notetakers. This starter therefore joins as a visible, user-operated meeting session and does **not** automatically read meeting chat or execute commands from other participants. Do not add unattended chat scraping or bot-like command execution. Ask Zoom to confirm the exact proposed workflow before extending it.
+
+The Meeting SDK embeds a meeting in this app. It does not attach to a meeting already open in the Zoom desktop client.
 
 ## Requirements
 
+- Windows 10/11
 - Node.js 22.12.0 or newer
 - Python 3.10+
-- A Zoom Meeting SDK app and credentials configured locally (never commit secrets)
 
-## Front end
+## Setup
 
-```bash
+1. Copy `.env.example` to `.env`.
+2. In your Zoom Marketplace developer app, enable the Meeting SDK and copy the SDK Key and SDK Secret into the local `.env` file:
+   - `ZOOM_MEETING_SDK_KEY=...`
+   - `ZOOM_MEETING_SDK_SECRET=...`
+3. Never commit `.env`, share the secret, or put it in a `VITE_*` browser variable.
+4. Open a terminal in the repository:
+
+```powershell
 npm install
 npm run dev
 ```
 
-Create `.env.local` from `.env.example` and configure the public SDK key and a server-generated meeting signature. Never put the SDK secret in browser code.
+5. In a second PowerShell window:
 
-## Local controller
-
-```bash
-python -m venv .venv
-.venv\\Scripts\\activate
+```powershell
+py -m venv .venv
+.venv\\Scripts\\Activate.ps1
 pip install -r requirements.txt
-python local_agent.py
+uvicorn local_agent:app --host 127.0.0.1 --port 8765
 ```
 
-Open http://127.0.0.1:8765 in the browser to check the local agent.
+6. Open the Vite URL shown in the first terminal (normally http://127.0.0.1:5173).
+7. Choose `VacuumTube.exe` manually, then launch it.
+8. Enter a Zoom Meeting ID, passcode, and display name, then click Join. The app joins as a separate visible participant; the meeting host may need to admit it.
 
-## Manual VacuumTube selection
+## Notes
 
-Use the app's Browse button to select `VacuumTube.exe`. The selected path is saved in the user's local config file. No automatic detection is performed.
-
-## Security
-
-- Keep Zoom SDK secrets out of Git.
-- Keep the local agent bound to loopback.
-- Do not expose the local agent to the public internet.
-- Only allowlisted commands are accepted; arbitrary shell commands are never executed.
+- Meeting SDK signatures are generated locally by the Python backend using the SDK secret and a short expiry.
+- For meetings outside your developer account, Zoom may require app review and user authorization.
+- The `!type` command is intentionally not implemented: arbitrary text injection is risky and has not been authorized.
+- Keyboard control uses PyAutoGUI and sends input to the currently focused window. Focus VacuumTube before using the manual controls.
+- The current YouTube action opens the validated video in the system browser; it does not guarantee that VacuumTube itself will navigate to it.
