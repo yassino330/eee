@@ -63,7 +63,7 @@ class App(tk.Tk):
         self.label(head, "Open Zoom + VacuumTube, then read accessible text from the meeting chat.",
                    color="#9ba6b8", size=9, bold="normal").pack(anchor="w", pady=4)
 
-        panel = tk.Frame(self, bg="#151a24", highlightbackground="#ffffff22", highlightthickness=1)
+        panel = tk.Frame(self, bg="#151a24", highlightbackground="#394252", highlightthickness=1)
         panel.pack(fill="x", padx=24, pady=7)
         self.label(panel, "01  /  ZOOM MEETING", color="#91a0b9").pack(anchor="w", padx=16, pady=(13, 6))
         tk.Entry(panel, textvariable=self.meeting, bg="#0e131c", fg="#f4f5f8",
@@ -83,7 +83,7 @@ class App(tk.Tk):
                   bg="#a7e875", fg="#101710", relief="flat",
                   font=("Segoe UI", 10, "bold"), pady=11).pack(fill="x", padx=24, pady=(8, 5))
 
-        listener = tk.Frame(self, bg="#151a24", highlightbackground="#ffffff22", highlightthickness=1)
+        listener = tk.Frame(self, bg="#151a24", highlightbackground="#394252", highlightthickness=1)
         listener.pack(fill="x", padx=24, pady=7)
         self.label(listener, "03  /  ZOOM CHAT ACCESSIBILITY READER", color="#91a0b9").pack(anchor="w", padx=15, pady=(11, 4))
         self.label(listener, "Reads text exposed by Zoom's Windows accessibility controls. Keep the meeting chat open.",
@@ -96,7 +96,7 @@ class App(tk.Tk):
         tk.Button(buttons, text="TEST CHAT READER", command=self.test_reader,
                   bg="#273245", fg="white", relief="flat", padx=14, pady=8).pack(side="left", padx=8)
 
-        controls = tk.Frame(self, bg="#151a24", highlightbackground="#ffffff22", highlightthickness=1)
+        controls = tk.Frame(self, bg="#151a24", highlightbackground="#394252", highlightthickness=1)
         controls.pack(fill="x", padx=24, pady=7)
         self.label(controls, "MANUAL TEST CONTROLS", color="#91a0b9").pack(anchor="w", padx=15, pady=(10, 5))
         grid = tk.Frame(controls, bg="#151a24")
