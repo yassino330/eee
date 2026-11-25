@@ -214,10 +214,9 @@ class App(tk.Tk):
         text = engine.image_to_string(shot, config="--psm 6")
         found = []
         for line in text.splitlines():
-            normalized = re.sub(r"[^a-z!]", "", line.lower())
-            for command in COMMANDS:
-                if command[1:] in normalized and ("!" in line or normalized.strip() == command[1:]):
-                    found.append((command, line.strip()))
+            match = re.search(r"!(up|down|left|right|enter|play|pause|mute)\\b", line.lower())
+            if match:
+                found.append(("!" + match.group(1), line.strip()))
         return found, text
 
     def test_ocr(self):
