@@ -1,35 +1,51 @@
 # VacuumTube Remote
 
-A native Windows launcher for starting a Zoom meeting and a manually selected VacuumTube installation.
+Windows desktop launcher with a local OCR listener for visible Zoom meeting chat.
 
-## Current workflow
+## Setup
 
-1. Run `install.bat` once.
-2. Run `start.bat`.
-3. Paste your Zoom meeting invite link.
-4. Click **Browse** and select the actual `VacuumTube.exe`.
-5. Click **START**. The app opens the Zoom meeting in your default browser/Zoom client and launches VacuumTube.
-6. Use the local arrow, Enter, Play/Pause, and Mute controls in the launcher.
+1. Install Python 3.10 or newer.
+2. Install **Tesseract OCR for Windows**. The app needs the Tesseract program (tesseract.exe), not just the Python package. Official project: https://github.com/UB-Mannheim/tesseract/wiki.
+3. Download this repository.
+4. Run install.bat.
+5. Run start.bat.
+6. Paste your Zoom meeting invite link.
+7. Click **Browse** and select the actual VacuumTube.exe.
+8. If Tesseract was not found automatically, click **Find…** and select tesseract.exe.
+9. Click **START — OPEN ZOOM + VACUUMTUBE**.
+10. Join the Zoom meeting, open the meeting chat panel, and keep the chat visible on screen.
+11. Click **START CHAT LISTENER**.
 
-The selected executable and meeting link are saved locally in:
+## Supported chat commands
 
-`%APPDATA%\VacuumTubeRemote\settings.json`
+- !up
+- !down
+- !left
+- !right
+- !enter
+- !play
+- !pause
+- !mute
 
-The executable is selected manually; the app does not scan your computer for it. No `.env` file, Zoom credentials, or server setup is required for this local launcher.
+The OCR listener checks the visible desktop locally about once per second. It looks for supported command text in visible chat and sends the corresponding key to the VacuumTube window. It does not read Zoom's private chat messages or access Zoom's internal data.
 
-## Important Zoom chat limitation
+## OCR limitations
 
-This build does **not** read or monitor normal Zoom meeting chat, and it does not receive commands sent by other participants. Zoom's supported chat-data integration requires Zoom-authorized access. The local controls in this build are not a substitute for that integration. No hidden Zoom-client scraping or chat interception is used.
+- Zoom's chat must be open and visible. Messages that are off-screen, hidden, or not loaded cannot be detected.
+- Keep Zoom's chat panel readable and avoid covering it with other windows.
+- OCR can misread text, especially at small sizes or low contrast. Use a larger Zoom chat font if needed.
+- Screenshots are processed locally on your PC and are not uploaded.
+- Repeated identical command lines have a short duplicate-suppression window.
+- The player window must have a title containing “VacuumTube” for reliable focusing.
 
-## Requirements
+## Settings
 
-- Windows 10 or Windows 11
-- Python 3.10+
-- VacuumTube installed locally
-- Zoom installed, or a browser capable of opening Zoom meeting links
+Settings are saved to %APPDATA%\\VacuumTubeRemote\\settings.json. No .env file or Zoom API credentials are used.
 
-## Notes
+## Troubleshooting
 
-- Keyboard input is sent to the currently focused application. Focus VacuumTube before using local controls.
-- The Zoom meeting link must be an HTTPS link on a Zoom domain.
-- This is a local launcher/controller, not a Zoom chat bot.
+- **Tesseract not installed or selected:** install Tesseract OCR and use Find… to select tesseract.exe.
+- **No commands detected:** open Zoom chat, make it wider/larger, put a visible !up message in the chat, then click TEST OCR NOW.
+- **Key not reaching VacuumTube:** make sure the player is open and its window title includes “VacuumTube”.
+
+This is a local screen-OCR workaround, not an official Zoom chat integration. It only detects messages visibly rendered on the local screen.
