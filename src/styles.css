@@ -23,3 +23,5 @@ footer{display:flex;justify-content:space-between;color:#697589;font:10px 'DM Mo
 
 #zoom-root{width:100%;min-height:360px;margin-top:12px;overflow:hidden;border-radius:12px}
 #zoom-root:empty{display:none}
+
+.zoom-context{display:grid;gap:9px;margin:18px 0}.zoom-context>div{display:flex;justify-content:space-between;gap:12px;padding:11px 12px;background:#0e131c;border:1px solid #ffffff12;border-radius:9px}.zoom-context span{font:10px 'DM Mono',monospace;letter-spacing:1px;color:#8290a6}.zoom-context strong{font-size:11px;color:#dce4ef;text-align:right;overflow-wrap:anywhere}
