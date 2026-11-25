@@ -31,7 +31,9 @@ This does **not** implement the requested `!commands` inside the regular Zoom ch
 2. Run `install.bat` once. It installs Python and Node dependencies and creates a local `.env` file from `.env.example`.
 3. Choose VacuumTube.exe manually in the app and launch it.
 4. For local browser preview, run `start.bat`.
-5. To run inside Zoom, deploy the Vite production build to an HTTPS host, configure that URL as your Zoom App's Home URL, configure the app's required capabilities, and install/test the app through the Zoom client. Zoom Apps do not load as a Zoom App merely by opening localhost in a normal browser.
+5. To run inside Zoom, deploy the Vite production build to an HTTPS host and configure that URL as your Zoom App's Home URL. In the Zoom Marketplace app build flow, enable the Zoom Apps SDK capabilities `getRunningContext`, `getMeetingContext`, and `getUserContext`.
+6. On each Windows PC that will run VacuumTube, set `APP_ORIGIN` in its local `.env` to the exact HTTPS origin of your deployed app (for example, `https://remote.example.com`, with no trailing slash), then restart the local controller. This allows the hosted Zoom App to call that PC's loopback controller through CORS.
+7. Install/test the Zoom App through the Zoom client. Opening localhost in a normal browser is only a preview; it does not make the page a Zoom App.
 
 ## Commands
 
