@@ -4,12 +4,10 @@ import json
 import os
 import re
 import subprocess
-import time
 import webbrowser
 from pathlib import Path
 from typing import Literal
 
-import jwt
 import pyautogui
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -47,9 +45,6 @@ class Command(BaseModel):
 class VideoCommand(BaseModel):
     url: str = Field(min_length=1, max_length=500)
 
-class SignatureRequest(BaseModel):
-    meeting_number: str = Field(pattern=r"^[0-9]{9,12}$")
-
 @app.get("/health")
 def health():
     return {"ok": True, "selected": bool(load_settings().get("executable"))}
@@ -58,24 +53,6 @@ def health():
 def settings():
     path = load_settings().get("executable", "")
     return {"selected": bool(path), "filename": Path(path).name if path else ""}
-
-@app.post("/zoom/signature")
-def zoom_signature(payload: SignatureRequest):
-    sdk_key = os.getenv("ZOOM_MEETING_SDK_KEY", "").strip()
-    sdk_secret = os.getenv("ZOOM_MEETING_SDK_SECRET", "").strip()
-    if not sdk_key or not sdk_secret:
-        raise HTTPException(status_code=503, detail="Add Zoom SDK key and secret to your local .env file, then restart the controller.")
-    now = int(time.time())
-    claims = {
-        "appKey": sdk_key,
-        "mn": payload.meeting_number,
-        "role": 0,
-        "iat": now - 30,
-        "exp": now + 60 * 60,
-        "tokenExp": now + 60 * 60,
-    }
-    signature = jwt.encode(claims, sdk_secret, algorithm="HS256")
-    return {"sdkKey": sdk_key, "signature": signature}
 
 @app.post("/select-executable")
 def select_executable():
@@ -120,7 +97,7 @@ def command(payload: Command):
 @app.post("/video")
 def open_video(payload: VideoCommand):
     match = re.fullmatch(
-        r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)?([A-Za-z0-9_-]{11})",
+        r"(?:https?://)?(?:www\\.)?(?:youtube\\.com/watch\\?v=|youtu\\.be/)?([A-Za-z0-9_-]{11})",
         payload.url.strip(),
     )
     if not match:
