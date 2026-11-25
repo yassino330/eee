@@ -120,7 +120,7 @@ def command(payload: Command):
 @app.post("/video")
 def open_video(payload: VideoCommand):
     match = re.fullmatch(
-        r"(?:https?://)?(?:www\\.)?(?:youtube\\.com/watch\\?v=|youtu\\.be/)?([A-Za-z0-9_-]{11})",
+        r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)?([A-Za-z0-9_-]{11})",
         payload.url.strip(),
     )
     if not match:
