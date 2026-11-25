@@ -214,7 +214,7 @@ class App(tk.Tk):
         text = engine.image_to_string(shot, config="--psm 6")
         found = []
         for line in text.splitlines():
-            match = re.search(r"!(up|down|left|right|enter|play|pause|mute)\\b", line.lower())
+            match = re.search(r"!(up|down|left|right|enter|play|pause|mute)\b", line.lower())
             if match:
                 found.append(("!" + match.group(1), line.strip()))
         return found, text
