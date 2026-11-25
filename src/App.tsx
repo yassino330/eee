@@ -86,7 +86,6 @@ export default function App() {
         leaveOnPageUnload: true
       });
       await client.join({
-        sdkKey: signatureData.sdkKey,
         signature: signatureData.signature,
         meetingNumber: meetingNumber.replace(/\s/g, ""),
         password: passcode,
